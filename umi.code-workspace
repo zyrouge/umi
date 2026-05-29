@@ -5,8 +5,8 @@
             "path": "."
         },
         {
-            "name": "backend",
-            "path": "backend"
+            "name": "server",
+            "path": "server"
         },
         {
             "name": "web",
