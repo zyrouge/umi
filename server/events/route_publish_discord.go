@@ -34,16 +34,16 @@ type DiscordEventInputEmbed struct {
 func DiscordEventRoute(w http.ResponseWriter, r *http.Request) {
 	var query DiscordEventInputQuery
 	if err := utils.GorillaSchemaDecoder.Decode(&query, r.URL.Query()); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if err := utils.GlobalValidator.Struct(query); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	var input DiscordEventInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	title := ""
@@ -53,7 +53,7 @@ func DiscordEventRoute(w http.ResponseWriter, r *http.Request) {
 		title = input.Username
 	}
 	if title == "" {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	var parts []string
@@ -82,24 +82,24 @@ func DiscordEventRoute(w http.ResponseWriter, r *http.Request) {
 	config, err := application.GetConfig()
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("failed to get master encryption key")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	team, err := repository.GetTeamByChannelId(query.ChannelId)
 	if err != nil || team == nil {
-		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.ErrorCodeNotFound)
+		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.UmiErrorCodeNotFound)
 		return
 	}
 	teamKey, err := repository.DecryptTeamEncryptionKey(team, config.Secret.TeamEncryptionKeyBytes)
 	if err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", team.Id).Msg("failed to decrypt team key")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	eventId, err := utils.GenerateUUIDv7()
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("failed to generate event id")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	event := repository.UmiEvent{
@@ -114,7 +114,7 @@ func DiscordEventRoute(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := repository.InsertEvent(&event, teamKey); err != nil {
 		utils.Logger.Error().Err(err).Str("channelId", query.ChannelId).Msg("failed to insert discord event")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	events_live.Manager.Publish(&event)

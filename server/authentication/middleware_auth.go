@@ -14,18 +14,18 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := ExtractAccessToken(r)
 		if token == "" {
-			utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.ErrorCodeUnauthorized)
+			utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.UmiErrorCodeUnauthorized)
 			return
 		}
 		config, err := application.GetConfig()
 		if err != nil {
 			utils.Logger.Error().Err(err).Msg("failed to get config")
-			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 			return
 		}
 		claims, err := ValidateAccessToken(token, config.Secret.JwtSecretBytes)
 		if err != nil {
-			utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.ErrorCodeUnauthorized)
+			utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.UmiErrorCodeUnauthorized)
 			return
 		}
 		r = r.WithContext(route_data.WithUserId(r.Context(), claims.UserId))

@@ -23,40 +23,40 @@ func PatchMeRoute(w http.ResponseWriter, r *http.Request) {
 	config, err := application.GetConfig()
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("failed to get config")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	userKey := config.Secret.UserEncryptionKeyBytes
 	var req PatchMeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if err := utils.GlobalValidator.Struct(req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if req.Username != nil {
 		existing, err := repository.GetUserByUsername(*req.Username, userKey)
 		if err != nil {
 			utils.Logger.Error().Err(err).Str("userId", userId).Msg("failed to query user by username")
-			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 			return
 		}
 		if existing != nil && existing.Id != userId {
-			utils.WriteHttpJsonError(w, http.StatusConflict, constants.ErrorCodeConflict)
+			utils.WriteHttpJsonError(w, http.StatusConflict, constants.UmiErrorCodeConflict)
 			return
 		}
 		if err := repository.UpdateUserUsername(userId, *req.Username); err != nil {
 			utils.Logger.Error().Err(err).Str("userId", userId).Msg("failed to update username")
-			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 			return
 		}
 	}
 	if req.Email != nil {
 		if err := repository.UpdateUserEmail(userId, *req.Email, userKey); err != nil {
 			utils.Logger.Error().Err(err).Str("userId", userId).Msg("failed to update email")
-			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 			return
 		}
 	}
@@ -64,19 +64,19 @@ func PatchMeRoute(w http.ResponseWriter, r *http.Request) {
 		hash, err := bcrypt.GenerateFromPassword([]byte(*req.Password), bcrypt.DefaultCost)
 		if err != nil {
 			utils.Logger.Error().Err(err).Str("userId", userId).Msg("failed to hash password")
-			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 			return
 		}
 		if err := repository.UpdateUserPasswordHash(userId, string(hash)); err != nil {
 			utils.Logger.Error().Err(err).Str("userId", userId).Msg("failed to update password hash")
-			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 			return
 		}
 	}
 	user, err := repository.GetUserById(userId, userKey)
 	if err != nil {
 		utils.Logger.Error().Err(err).Str("userId", userId).Msg("failed to get user")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	utils.WriteHttpJsonResponse(w, http.StatusOK, user)

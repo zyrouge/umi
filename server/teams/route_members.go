@@ -18,7 +18,7 @@ func ListMembersRoute(w http.ResponseWriter, r *http.Request) {
 	members, err := repository.ListMembersByTeamId(teamId)
 	if err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", teamId).Msg("failed to list members")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	utils.WriteHttpJsonResponse(w, http.StatusOK, members)
@@ -30,38 +30,38 @@ type AddMemberRequest struct {
 }
 
 func AddMemberRoute(w http.ResponseWriter, r *http.Request) {
-	if !authentication.RequirePermissionMiddleware(w, r, repository.MemberRoleAdmin) {
+	if !authentication.RequirePermissionMiddleware(w, r, repository.UmiMemberRoleAdmin) {
 		return
 	}
 	teamId := route_data.GetTeamId(r.Context())
 	var req AddMemberRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if err := utils.GlobalValidator.Struct(req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	config, err := application.GetConfig()
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("failed to get config")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	user, err := repository.GetUserById(req.UserId, config.Secret.UserEncryptionKeyBytes)
 	if err != nil || user == nil {
-		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.ErrorCodeNotFound)
+		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.UmiErrorCodeNotFound)
 		return
 	}
 	existing, err := repository.GetMember(req.UserId, teamId)
 	if err != nil {
 		utils.Logger.Error().Err(err).Str("userId", req.UserId).Str("teamId", teamId).Msg("failed to get existing member")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	if existing != nil {
-		utils.WriteHttpJsonError(w, http.StatusConflict, constants.ErrorCodeConflict)
+		utils.WriteHttpJsonError(w, http.StatusConflict, constants.UmiErrorCodeConflict)
 		return
 	}
 	now := time.Now().Unix()
@@ -70,7 +70,7 @@ func AddMemberRoute(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := repository.InsertMember(&member); err != nil {
 		utils.Logger.Error().Err(err).Str("userId", req.UserId).Str("teamId", teamId).Msg("failed to insert member")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	utils.WriteHttpJsonResponse(w, http.StatusCreated, &member)
@@ -81,23 +81,23 @@ type UpdateMemberRoleRequest struct {
 }
 
 func UpdateMemberRoleRoute(w http.ResponseWriter, r *http.Request) {
-	if !authentication.RequirePermissionMiddleware(w, r, repository.MemberRoleOwner) {
+	if !authentication.RequirePermissionMiddleware(w, r, repository.UmiMemberRoleOwner) {
 		return
 	}
 	teamId := route_data.GetTeamId(r.Context())
 	targetUserId := route_data.GetMemberUserId(r.Context())
 	var req UpdateMemberRoleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if err := utils.GlobalValidator.Struct(req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if err := repository.UpdateMemberRole(targetUserId, teamId, req.Role); err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", teamId).Str("targetUserId", targetUserId).Msg("failed to update member role")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	member, _ := repository.GetMember(targetUserId, teamId)
@@ -109,22 +109,22 @@ func RemoveMemberRoute(w http.ResponseWriter, r *http.Request) {
 	targetUserId := route_data.GetMemberUserId(r.Context())
 	callerUserId := authentication.GetUserId(r.Context())
 	callerRole := authentication.GetTeamRole(r.Context())
-	if callerUserId != targetUserId && !repository.HasMinRole(callerRole, repository.MemberRoleAdmin) {
-		utils.WriteHttpJsonError(w, http.StatusForbidden, constants.ErrorCodeForbidden)
+	if callerUserId != targetUserId && !repository.HasMinRole(callerRole, repository.UmiMemberRoleAdmin) {
+		utils.WriteHttpJsonError(w, http.StatusForbidden, constants.UmiErrorCodeForbidden)
 		return
 	}
 	target, err := repository.GetMember(targetUserId, teamId)
 	if err != nil || target == nil {
-		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.ErrorCodeNotFound)
+		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.UmiErrorCodeNotFound)
 		return
 	}
-	if target.Role == repository.MemberRoleOwner && callerUserId != targetUserId {
-		utils.WriteHttpJsonError(w, http.StatusForbidden, constants.ErrorCodeForbidden)
+	if target.Role == repository.UmiMemberRoleOwner && callerUserId != targetUserId {
+		utils.WriteHttpJsonError(w, http.StatusForbidden, constants.UmiErrorCodeForbidden)
 		return
 	}
 	if err := repository.DeleteMemberByUserIdAndTeamId(targetUserId, teamId); err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", teamId).Str("targetUserId", targetUserId).Msg("failed to delete member")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	utils.WriteHttpJsonResponse(w, http.StatusOK, nil)

@@ -40,31 +40,31 @@ type LoginRouteJsonOutput struct {
 func LoginRoute(w http.ResponseWriter, r *http.Request) {
 	var input LoginRouteInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if input.Username == "" || input.Password == "" {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	config, err := application.GetConfig()
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("failed to get config")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	user, err := repository.GetUserByUsername(input.Username, config.Secret.UserEncryptionKeyBytes)
 	if err != nil {
 		utils.Logger.Error().Err(err).Str("username", input.Username).Msg("failed to query user")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	if user == nil {
-		utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.ErrorCodeUnauthorized)
+		utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.UmiErrorCodeUnauthorized)
 		return
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.Password)); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.ErrorCodeUnauthorized)
+		utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.UmiErrorCodeUnauthorized)
 		return
 	}
 	var teamId *string
@@ -73,11 +73,11 @@ func LoginRoute(w http.ResponseWriter, r *http.Request) {
 		member, err := repository.GetMember(user.Id, *input.TeamId)
 		if err != nil {
 			utils.Logger.Error().Err(err).Str("userId", user.Id).Str("teamId", *input.TeamId).Msg("failed to query member")
-			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 			return
 		}
 		if member == nil {
-			utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.ErrorCodeUnauthorized)
+			utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.UmiErrorCodeUnauthorized)
 			return
 		}
 		teamId = &member.TeamId
@@ -86,13 +86,13 @@ func LoginRoute(w http.ResponseWriter, r *http.Request) {
 	accessToken, err := GenerateAccessToken(user.Id, teamId, memberRole, config.Secret.JwtSecretBytes)
 	if err != nil {
 		utils.Logger.Error().Err(err).Str("userId", user.Id).Str("teamId", utils.FormatStringPtr(teamId)).Msg("failed to generate access token")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	refreshToken, err := GenerateRefreshToken(user.Id)
 	if err != nil {
 		utils.Logger.Error().Err(err).Str("userId", user.Id).Msg("failed to generate refresh token")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	accessTokenExpiresInSeconds := int(AccessTokenTTL.Seconds())

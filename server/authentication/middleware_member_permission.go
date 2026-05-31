@@ -13,7 +13,7 @@ func MemberPermissionMiddleware(next http.Handler, permission repository.UmiMemb
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		role := route_data.GetTeamRole(r.Context())
 		if !role.HasPermission(permission) {
-			utils.WriteHttpJsonError(w, http.StatusForbidden, constants.ErrorCodeForbidden)
+			utils.WriteHttpJsonError(w, http.StatusForbidden, constants.UmiErrorCodeForbidden)
 			return
 		}
 		next.ServeHTTP(w, r)

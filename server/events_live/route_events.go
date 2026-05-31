@@ -27,20 +27,20 @@ type LiveEventInputQuery struct {
 func LiveEventRoute(w http.ResponseWriter, r *http.Request) {
 	var query LiveEventInputQuery
 	if err := utils.GorillaSchemaDecoder.Decode(&query, r.URL.Query()); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if err := utils.GlobalValidator.Struct(query); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	var channelIds []string
 	if err := json.Unmarshal([]byte(query.Channels), &channelIds); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if len(channelIds) == 0 {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	seen := make(map[string]struct{}, len(channelIds))
@@ -56,23 +56,23 @@ func LiveEventRoute(w http.ResponseWriter, r *http.Request) {
 	count, err := repository.CountAccessibleChannelsByUserIdAndChannelIds(userId, channelIds)
 	if err != nil {
 		utils.Logger.Error().Err(err).Str("userId", userId).Strs("channelIds", channelIds).Msg("failed to check channel access")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	if count != len(channelIds) {
-		utils.WriteHttpJsonError(w, http.StatusForbidden, constants.ErrorCodeForbidden)
+		utils.WriteHttpJsonError(w, http.StatusForbidden, constants.UmiErrorCodeForbidden)
 		return
 	}
 	config, err := application.GetConfig()
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("failed to get master encryption key")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	channelKeys, err := repository.GetChannelTeamKeys(channelIds, config.Secret.TeamEncryptionKeyBytes)
 	if err != nil {
 		utils.Logger.Error().Err(err).Strs("channelIds", channelIds).Msg("failed to get channel team keys")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	websocketConnection, err := Upgrader.Upgrade(w, r, nil)

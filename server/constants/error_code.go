@@ -3,10 +3,10 @@ package constants
 type UmiErrorCode string
 
 const (
-	ErrorCodeInternal     UmiErrorCode = "internal_error"
-	ErrorCodeInvalidInput UmiErrorCode = "invalid_input"
-	ErrorCodeNotFound     UmiErrorCode = "not_found"
-	ErrorCodeUnauthorized UmiErrorCode = "unauthorized"
-	ErrorCodeForbidden    UmiErrorCode = "forbidden"
-	ErrorCodeConflict     UmiErrorCode = "conflict"
+	UmiErrorCodeInternal     UmiErrorCode = "internal_error"
+	UmiErrorCodeInvalidInput UmiErrorCode = "invalid_input"
+	UmiErrorCodeNotFound     UmiErrorCode = "not_found"
+	UmiErrorCodeUnauthorized UmiErrorCode = "unauthorized"
+	UmiErrorCodeForbidden    UmiErrorCode = "forbidden"
+	UmiErrorCodeConflict     UmiErrorCode = "conflict"
 )

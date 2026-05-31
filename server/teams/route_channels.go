@@ -17,23 +17,23 @@ type CreateChannelRequest struct {
 }
 
 func CreateChannelRoute(w http.ResponseWriter, r *http.Request) {
-	if !authentication.RequirePermissionMiddleware(w, r, repository.MemberRoleAdmin) {
+	if !authentication.RequirePermissionMiddleware(w, r, repository.UmiMemberRoleAdmin) {
 		return
 	}
 	teamId := route_data.GetTeamId(r.Context())
 	var req CreateChannelRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if err := utils.GlobalValidator.Struct(req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	channelId, err := utils.GenerateUUIDv7()
 	if err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", teamId).Msg("failed to generate channel id")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	now := time.Now().Unix()
@@ -42,7 +42,7 @@ func CreateChannelRoute(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := repository.CreateChannel(&channel); err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", teamId).Msg("failed to create channel")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	utils.WriteHttpJsonResponse(w, http.StatusCreated, &channel)
@@ -53,7 +53,7 @@ func ListChannelsRoute(w http.ResponseWriter, r *http.Request) {
 	channels, err := repository.ListChannelsByTeamId(teamId)
 	if err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", teamId).Msg("failed to list channels")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	utils.WriteHttpJsonResponse(w, http.StatusOK, channels)
@@ -64,7 +64,7 @@ func GetChannelRoute(w http.ResponseWriter, r *http.Request) {
 	channelId := route_data.GetChannelId(r.Context())
 	channel, err := repository.GetChannelById(channelId)
 	if err != nil || channel == nil || channel.TeamId != teamId {
-		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.ErrorCodeNotFound)
+		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.UmiErrorCodeNotFound)
 		return
 	}
 	utils.WriteHttpJsonResponse(w, http.StatusOK, channel)
@@ -75,28 +75,28 @@ type UpdateChannelRequest struct {
 }
 
 func UpdateChannelRoute(w http.ResponseWriter, r *http.Request) {
-	if !authentication.RequirePermissionMiddleware(w, r, repository.MemberRoleAdmin) {
+	if !authentication.RequirePermissionMiddleware(w, r, repository.UmiMemberRoleAdmin) {
 		return
 	}
 	teamId := route_data.GetTeamId(r.Context())
 	channelId := route_data.GetChannelId(r.Context())
 	channel, err := repository.GetChannelById(channelId)
 	if err != nil || channel == nil || channel.TeamId != teamId {
-		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.ErrorCodeNotFound)
+		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.UmiErrorCodeNotFound)
 		return
 	}
 	var req UpdateChannelRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if err := utils.GlobalValidator.Struct(req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if err := repository.UpdateChannelNameById(channelId, req.Name); err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", teamId).Str("channelId", channelId).Msg("failed to update channel name")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	channel.Name = req.Name
@@ -104,19 +104,19 @@ func UpdateChannelRoute(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteChannelRoute(w http.ResponseWriter, r *http.Request) {
-	if !authentication.RequirePermissionMiddleware(w, r, repository.MemberRoleAdmin) {
+	if !authentication.RequirePermissionMiddleware(w, r, repository.UmiMemberRoleAdmin) {
 		return
 	}
 	teamId := route_data.GetTeamId(r.Context())
 	channelId := route_data.GetChannelId(r.Context())
 	channel, err := repository.GetChannelById(channelId)
 	if err != nil || channel == nil || channel.TeamId != teamId {
-		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.ErrorCodeNotFound)
+		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.UmiErrorCodeNotFound)
 		return
 	}
 	if err := repository.DeleteChannelById(channelId); err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", teamId).Str("channelId", channelId).Msg("failed to delete channel")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	utils.WriteHttpJsonResponse(w, http.StatusOK, nil)

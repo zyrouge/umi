@@ -20,17 +20,17 @@ type CreateServiceRequest struct {
 }
 
 func CreateServiceRoute(w http.ResponseWriter, r *http.Request) {
-	if !authentication.RequirePermissionMiddleware(w, r, repository.MemberRoleAdmin) {
+	if !authentication.RequirePermissionMiddleware(w, r, repository.UmiMemberRoleAdmin) {
 		return
 	}
 	teamId := route_data.GetTeamId(r.Context())
 	var req CreateServiceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if err := utils.GlobalValidator.Struct(req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	hash := sha256.Sum256([]byte(req.Token))
@@ -39,7 +39,7 @@ func CreateServiceRoute(w http.ResponseWriter, r *http.Request) {
 	serviceId, err := utils.GenerateUUIDv7()
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("failed to generate service id")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	service := repository.UmiService{
@@ -52,7 +52,7 @@ func CreateServiceRoute(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := repository.CreateService(&service); err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", teamId).Msg("failed to create service")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	utils.WriteHttpJsonResponse(w, http.StatusCreated, &service)
@@ -63,7 +63,7 @@ func ListServicesRoute(w http.ResponseWriter, r *http.Request) {
 	services, err := repository.ListServicesByTeamId(teamId)
 	if err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", teamId).Msg("failed to list services")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	utils.WriteHttpJsonResponse(w, http.StatusOK, services)
@@ -74,7 +74,7 @@ func GetServiceRoute(w http.ResponseWriter, r *http.Request) {
 	serviceId := route_data.GetServiceId(r.Context())
 	service, err := repository.GetServiceById(serviceId)
 	if err != nil || service == nil || service.TeamId != teamId {
-		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.ErrorCodeNotFound)
+		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.UmiErrorCodeNotFound)
 		return
 	}
 	utils.WriteHttpJsonResponse(w, http.StatusOK, service)
@@ -85,28 +85,28 @@ type UpdateServiceRequest struct {
 }
 
 func UpdateServiceRoute(w http.ResponseWriter, r *http.Request) {
-	if !authentication.RequirePermissionMiddleware(w, r, repository.MemberRoleAdmin) {
+	if !authentication.RequirePermissionMiddleware(w, r, repository.UmiMemberRoleAdmin) {
 		return
 	}
 	teamId := route_data.GetTeamId(r.Context())
 	serviceId := route_data.GetServiceId(r.Context())
 	service, err := repository.GetServiceById(serviceId)
 	if err != nil || service == nil || service.TeamId != teamId {
-		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.ErrorCodeNotFound)
+		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.UmiErrorCodeNotFound)
 		return
 	}
 	var req UpdateServiceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if err := utils.GlobalValidator.Struct(req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if err := repository.UpdateServiceName(serviceId, req.Name); err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", teamId).Str("serviceId", serviceId).Msg("failed to update service name")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	service.Name = req.Name
@@ -118,49 +118,49 @@ type RotateServiceTokenRequest struct {
 }
 
 func RotateServiceTokenRoute(w http.ResponseWriter, r *http.Request) {
-	if !authentication.RequirePermissionMiddleware(w, r, repository.MemberRoleAdmin) {
+	if !authentication.RequirePermissionMiddleware(w, r, repository.UmiMemberRoleAdmin) {
 		return
 	}
 	teamId := route_data.GetTeamId(r.Context())
 	serviceId := route_data.GetServiceId(r.Context())
 	service, err := repository.GetServiceById(serviceId)
 	if err != nil || service == nil || service.TeamId != teamId {
-		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.ErrorCodeNotFound)
+		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.UmiErrorCodeNotFound)
 		return
 	}
 	var req RotateServiceTokenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if err := utils.GlobalValidator.Struct(req); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	hash := sha256.Sum256([]byte(req.Token))
 	tokenHash := fmt.Sprintf("%x", hash)
 	if err := repository.UpdateServiceTokenHash(serviceId, tokenHash); err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", teamId).Str("serviceId", serviceId).Msg("failed to rotate service token")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	utils.WriteHttpJsonResponse(w, http.StatusOK, nil)
 }
 
 func DeleteServiceRoute(w http.ResponseWriter, r *http.Request) {
-	if !authentication.RequirePermissionMiddleware(w, r, repository.MemberRoleAdmin) {
+	if !authentication.RequirePermissionMiddleware(w, r, repository.UmiMemberRoleAdmin) {
 		return
 	}
 	teamId := route_data.GetTeamId(r.Context())
 	serviceId := route_data.GetServiceId(r.Context())
 	service, err := repository.GetServiceById(serviceId)
 	if err != nil || service == nil || service.TeamId != teamId {
-		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.ErrorCodeNotFound)
+		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.UmiErrorCodeNotFound)
 		return
 	}
 	if err := repository.DeleteService(serviceId); err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", teamId).Str("serviceId", serviceId).Msg("failed to delete service")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	utils.WriteHttpJsonResponse(w, http.StatusOK, nil)

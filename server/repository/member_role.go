@@ -3,9 +3,9 @@ package repository
 type UmiMemberRole string
 
 const (
-	MemberRoleOwner  UmiMemberRole = "owner"
-	MemberRoleAdmin  UmiMemberRole = "admin"
-	MemberRoleMember UmiMemberRole = "member"
+	UmiMemberRoleOwner  UmiMemberRole = "owner"
+	UmiMemberRoleAdmin  UmiMemberRole = "admin"
+	UmiMemberRoleMember UmiMemberRole = "member"
 )
 
 type UmiMemberPermission int
@@ -17,9 +17,9 @@ const (
 )
 
 var RolePermissions = map[UmiMemberRole]UmiMemberPermission{
-	MemberRoleOwner:  UmiMemberPermissionRead | UmiMemberPermissionWrite | UmiMemberPermissionAdmin,
-	MemberRoleAdmin:  UmiMemberPermissionRead | UmiMemberPermissionWrite,
-	MemberRoleMember: UmiMemberPermissionRead,
+	UmiMemberRoleOwner:  UmiMemberPermissionRead | UmiMemberPermissionWrite | UmiMemberPermissionAdmin,
+	UmiMemberRoleAdmin:  UmiMemberPermissionRead | UmiMemberPermissionWrite,
+	UmiMemberRoleMember: UmiMemberPermissionRead,
 }
 
 func (r UmiMemberRole) Permissions() UmiMemberPermission {

@@ -27,34 +27,34 @@ type PublishEventInput struct {
 func PublishEventRoute(w http.ResponseWriter, r *http.Request) {
 	var input PublishEventInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	if err := utils.GlobalValidator.Struct(input); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	config, err := application.GetConfig()
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("failed to get config")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	team, err := repository.GetTeamByChannelId(input.ChannelId)
 	if err != nil || team == nil {
-		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.ErrorCodeNotFound)
+		utils.WriteHttpJsonError(w, http.StatusNotFound, constants.UmiErrorCodeNotFound)
 		return
 	}
 	teamKey, err := repository.DecryptTeamEncryptionKey(team, config.Secret.TeamEncryptionKeyBytes)
 	if err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", team.Id).Msg("failed to decrypt team key")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	eventId, err := utils.GenerateUUIDv7()
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("failed to generate event id")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	event := repository.UmiEvent{
@@ -71,14 +71,14 @@ func PublishEventRoute(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := repository.InsertEvent(&event, teamKey); err != nil {
 		utils.Logger.Error().Err(err).Str("channelId", input.ChannelId).Msg("failed to insert event")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	now := time.Now().Unix()
 	existingTags, err := repository.GetTagByNames(team.Id, input.Tags)
 	if err != nil {
 		utils.Logger.Error().Str("teamId", team.Id).Strs("tags", input.Tags).Err(err).Msg("failed to get existing tags")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	var newTags []*repository.UmiTag
@@ -89,7 +89,7 @@ func PublishEventRoute(w http.ResponseWriter, r *http.Request) {
 		tagId, err := utils.GenerateUUIDv7()
 		if err != nil {
 			utils.Logger.Error().Err(err).Msg("failed to generate tag id")
-			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 			return
 		}
 		existingTags[tagName] = &repository.UmiTag{
@@ -99,7 +99,7 @@ func PublishEventRoute(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := repository.BulkInsertTags(newTags); err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", team.Id).Msg("failed to bulk insert tags")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	associations := make([]*repository.UmiEventTag, 0, len(input.Tags))
@@ -110,7 +110,7 @@ func PublishEventRoute(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := repository.BulkInsertEventTags(associations); err != nil {
 		utils.Logger.Error().Err(err).Str("teamId", team.Id).Strs("tags", input.Tags).Msg("failed to bulk insert event tag associations")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	events_live.Manager.Publish(&event)

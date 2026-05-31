@@ -29,7 +29,7 @@ func GetServiceName(ctx context.Context) string {
 func RequirePermissionMiddleware(w http.ResponseWriter, r *http.Request, minRole repository.UmiMemberRole) bool {
 	role := route_data.GetTeamRole(r.Context())
 	if !repository.HasMinRole(role, minRole) {
-		utils.WriteHttpJsonError(w, http.StatusForbidden, constants.ErrorCodeForbidden)
+		utils.WriteHttpJsonError(w, http.StatusForbidden, constants.UmiErrorCodeForbidden)
 		return false
 	}
 	return true

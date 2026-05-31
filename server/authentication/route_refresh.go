@@ -31,7 +31,7 @@ type RefreshRouteJsonOutput struct {
 func RefreshRoute(w http.ResponseWriter, r *http.Request) {
 	var input RefreshRouteInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	refreshToken := ""
@@ -39,36 +39,36 @@ func RefreshRoute(w http.ResponseWriter, r *http.Request) {
 		var err error
 		refreshToken, err = GetCookieValue(r, constants.HttpCookieRefreshToken)
 		if err != nil {
-			utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+			utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 			return
 		}
 	} else {
 		refreshToken = input.RefreshToken
 	}
 	if refreshToken == "" {
-		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.ErrorCodeInvalidInput)
+		utils.WriteHttpJsonError(w, http.StatusBadRequest, constants.UmiErrorCodeInvalidInput)
 		return
 	}
 	config, err := application.GetConfig()
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("failed to get config")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	refreshTokenData, err := ValidateRefreshToken(refreshToken)
 	if err != nil {
 		utils.Logger.Error().Err(err).Msg("failed to validate refresh token")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	user, err := repository.GetUserById(refreshTokenData.UserId, config.Secret.UserEncryptionKeyBytes)
 	if err != nil {
 		utils.Logger.Error().Err(err).Str("userId", refreshTokenData.UserId).Msg("failed to query user")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	if user == nil {
-		utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.ErrorCodeUnauthorized)
+		utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.UmiErrorCodeUnauthorized)
 		return
 	}
 	var teamId *string
@@ -77,11 +77,11 @@ func RefreshRoute(w http.ResponseWriter, r *http.Request) {
 		member, err := repository.GetMember(user.Id, *input.TeamId)
 		if err != nil {
 			utils.Logger.Error().Err(err).Str("userId", user.Id).Str("teamId", utils.FormatStringPtr(input.TeamId)).Msg("failed to query member")
-			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 			return
 		}
 		if member == nil {
-			utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.ErrorCodeUnauthorized)
+			utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.UmiErrorCodeUnauthorized)
 			return
 		}
 		teamId = &member.TeamId
@@ -90,13 +90,13 @@ func RefreshRoute(w http.ResponseWriter, r *http.Request) {
 	newAccessToken, err := GenerateAccessToken(user.Id, teamId, memberRole, config.Secret.JwtSecretBytes)
 	if err != nil {
 		utils.Logger.Error().Err(err).Str("userId", user.Id).Str("teamId", utils.FormatStringPtr(teamId)).Msg("failed to generate access token")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	newRefreshToken, err := GenerateRefreshToken(user.Id)
 	if err != nil {
 		utils.Logger.Error().Err(err).Str("userId", user.Id).Msg("failed to generate refresh token")
-		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+		utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 		return
 	}
 	accessTokenExpiresInSeconds := int(AccessTokenTTL.Seconds())

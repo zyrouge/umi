@@ -14,7 +14,7 @@ func ServiceAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := ExtractBearerToken(r)
 		if token == "" {
-			utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.ErrorCodeUnauthorized)
+			utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.UmiErrorCodeUnauthorized)
 			return
 		}
 		tokenHashBytes := sha256.Sum256([]byte(token))
@@ -22,11 +22,11 @@ func ServiceAuthMiddleware(next http.Handler) http.Handler {
 		service, err := repository.GetServiceByTokenHash(tokenHash)
 		if err != nil {
 			utils.Logger.Error().Err(err).Msg("failed to query service by token hash")
-			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.ErrorCodeInternal)
+			utils.WriteHttpJsonError(w, http.StatusInternalServerError, constants.UmiErrorCodeInternal)
 			return
 		}
 		if service == nil {
-			utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.ErrorCodeUnauthorized)
+			utils.WriteHttpJsonError(w, http.StatusUnauthorized, constants.UmiErrorCodeUnauthorized)
 			return
 		}
 		r = r.WithContext(route_data.WithServiceId(r.Context(), service.Id))
