@@ -7,7 +7,7 @@ import (
 	"zyrouge.me/umi/database"
 )
 
-func UpdateServiceName(id, name string) error {
+func UpdateServiceName(id string, name string) error {
 	connection, err := database.GetConnection()
 	if err != nil {
 		return fmt.Errorf("failed to get database connection: %w", err)
@@ -16,7 +16,7 @@ func UpdateServiceName(id, name string) error {
 	return err
 }
 
-func UpdateServiceTokenHash(id, tokenHash string) error {
+func UpdateServiceTokenHash(id string, tokenHash string) error {
 	connection, err := database.GetConnection()
 	if err != nil {
 		return fmt.Errorf("failed to get database connection: %w", err)

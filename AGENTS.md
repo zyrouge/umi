@@ -39,10 +39,11 @@ Even a single-function operation gets its own file.
 
 - All domain types are prefixed with `Umi`: `UmiUser`, `UmiConfig`, `UmiMemberRole`
 - Enumerables use typed aliases: `type UmiMemberRole string`
-- Constants are named `<Type><Variant>`: `MemberRoleOwner`, `ErrorCodeInternal`
+- Constants are named `<Type><Variant>`: `UmiMemberRoleOwner`, `UmiErrorCodeInternal`
 - Package-level cache variables use the `cached` prefix: `cachedConnection`, `configCache`
 - Package-level singletons use descriptive exported names: `Manager`, `Logger`, `GlobalValidator`
 - No abbreviated identifiers: use `config` not `cfg`, `database` not `db`, `connection` not `conn` — standard Go short-lived variables (`err`, `ok`, `i`) are fine
+- Always write explicit types on every parameter: `func(username string, userId string, ...)` not `func(username, userId string, ...)`
 - Receiver names are one or two lowercase letters matching the type
 - Highly refrain from unexported types, structs, methods, and variables — everything stays public
 

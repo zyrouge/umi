@@ -8,7 +8,7 @@ import (
 	"zyrouge.me/umi/database"
 )
 
-func GetMember(userId, teamId string) (*UmiMember, error) {
+func GetMember(userId string, teamId string) (*UmiMember, error) {
 	connection, err := database.GetConnection()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get database connection: %w", err)

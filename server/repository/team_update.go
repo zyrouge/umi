@@ -7,7 +7,7 @@ import (
 	"zyrouge.me/umi/database"
 )
 
-func UpdateTeamName(id, name string) error {
+func UpdateTeamName(id string, name string) error {
 	connection, err := database.GetConnection()
 	if err != nil {
 		return fmt.Errorf("failed to get database connection: %w", err)

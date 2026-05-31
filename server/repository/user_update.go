@@ -20,7 +20,7 @@ func UpdateUserEmail(id string, email string, userKey []byte) error {
 	return err
 }
 
-func UpdateUserUsername(id, username string) error {
+func UpdateUserUsername(id string, username string) error {
 	connection, err := database.GetConnection()
 	if err != nil {
 		return fmt.Errorf("failed to get database connection: %w", err)
@@ -29,7 +29,7 @@ func UpdateUserUsername(id, username string) error {
 	return err
 }
 
-func UpdateUserPasswordHash(id, hash string) error {
+func UpdateUserPasswordHash(id string, hash string) error {
 	connection, err := database.GetConnection()
 	if err != nil {
 		return fmt.Errorf("failed to get database connection: %w", err)
