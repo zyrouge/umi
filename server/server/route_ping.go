@@ -7,5 +7,5 @@ import (
 )
 
 func PingRoute(w http.ResponseWriter, r *http.Request) {
-	utils.WriteHttpJsonResponse(w, http.StatusOK, true, "pong!")
+	utils.WriteHttpJsonResponse(w, http.StatusOK, "pong!")
 }

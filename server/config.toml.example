@@ -1,0 +1,15 @@
+[server]
+host = "localhost"
+port = 6050
+cross_origin = ["http://localhost:6051"]
+# web_files = "../web/dist"
+
+[database]
+driver = "sqlite"
+dsn = "./umi.db"
+retention_days = 7
+
+[secret]
+jwt_secret = ""
+team_encryption_key = ""
+user_encryption_key = ""

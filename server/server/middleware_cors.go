@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-func CorsMiddleware(allowedOrigins []string, next http.Handler) http.Handler {
+func CorsMiddleware(next http.Handler, allowedOrigins []string) http.Handler {
 	allowedOriginsMap := make(map[string]struct{})
 	for _, origin := range allowedOrigins {
 		allowedOriginsMap[origin] = struct{}{}

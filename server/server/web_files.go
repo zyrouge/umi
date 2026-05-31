@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/gorilla/mux"
-	"zyrouge.me/umi/config"
+	"zyrouge.me/umi/application"
 )
 
 type WebFilesHandler struct {
@@ -15,10 +15,11 @@ type WebFilesHandler struct {
 
 func NewWebFilesHandler(dir string) *WebFilesHandler {
 	fileSystem := http.Dir(dir)
-	return &WebFilesHandler{
+	handler := WebFilesHandler{
 		FileSystem: fileSystem,
 		RawHandler: http.FileServer(fileSystem),
 	}
+	return &handler
 }
 
 func (webFilesHandler *WebFilesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -34,13 +35,14 @@ func (webFilesHandler *WebFilesHandler) ServeHTTP(w http.ResponseWriter, r *http
 	webFilesHandler.RawHandler.ServeHTTP(w, r2)
 }
 
-func AttachWebFilesRoutes(router *mux.Router) {
-	config, err := config.GetConfig()
+func AttachWebFilesRoutes(router *mux.Router) error {
+	config, err := application.GetConfig()
 	if err != nil {
-		return
+		return err
 	}
 	if config.Server.WebFiles == "" {
-		return
+		return nil
 	}
 	router.PathPrefix("/").Handler(NewWebFilesHandler(config.Server.WebFiles))
+	return nil
 }
